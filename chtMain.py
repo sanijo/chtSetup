@@ -7,13 +7,22 @@ Created on Thu Feb 21 13:17:19 2019
 """
 
 import chtFunctions as cht 
-import os           
+import tkinter as tk
+from tkinter import filedialog
+import os          
     
 def main():
 
     cwd = os.getcwd()
     
-    path = '/home/sanijo/OpenFOAM/sanijo-4.1/run/CHT_DENII'
+    #Prompt user for path
+    root = tk.Tk()
+    root.withdraw()
+    path = filedialog.askdirectory()
+    print(path)
+    
+    #Specify path directly
+#    path = '/home/sanijo/OpenFOAM/sanijo-4.1/run/CHT_chtMain_test'
     
     solidRegions, fluidRegions = cht.getRegions(path)
     
@@ -24,7 +33,7 @@ def main():
      
     cht.createFolders(path,regions)
     
-    cht.fluentMeshToFoam(path, regions)
+#    cht.fluentMeshToFoam(path, regions)
     
     cht.createInterface(path, regions)
     

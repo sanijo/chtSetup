@@ -366,9 +366,13 @@ def setTfluid(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField']['inlet'] = {'type': 'fixedValue', 'value': 'uniform 293.15'}
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 293.15'}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'zeroGradient'}
+            f['boundaryField'][key] = {'type': 'zeroGradient'}
+        if 'heat_in' in key:
+            heat = str(input('\nq [heat flux] value for patch '+str(key)+': '))
+            f['boundaryField'][key] = {'type': 'externalWallHeatFluxTemperature', 'kappaMethod': 'fluidThermo',
+              'q': heat, 'value': 'uniform 293.15', 'kappaName': 'none'}
     
     f.writeFile()
     
@@ -382,18 +386,23 @@ def setUfluid(path, region, patch_info):
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'noSlip'}
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedValue', 'value': 'uniform (0 0 0)'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'noSlip'}
+                f['boundaryField']['".*_interface"'] = {'type': 'fixedValue', 'value': 'uniform (0 0 0)'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            flow = str(input('\nFlow rate [m3/s] value for patch '+str(key)+': '))
-            f['boundaryField']['inlet'] = {'type': 'flowRateInletVelocity', 'volumetricFlowRate': str(flow), 'value': 'uniform (0 0 0)'}
+            x = str(input('\nVelocity x component [m/s] value for patch '+str(key)+': '))
+            y = str(input('\nVelocity y component [m/s] value for patch '+str(key)+': '))
+            z = str(input('\nVelocity z component [m/s] value for patch '+str(key)+': '))
+            vector = 'uniform ('+str(x)+' '+str(y)+' '+str(z)+')'
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': vector}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'inletOutlet', 'value': 'uniform (0 0 0)', 'inletValue': 'uniform (0 0 0)'}
+            f['boundaryField'][key] = {'type': 'inletOutlet', 'value': 'uniform (0 0 0)', 'inletValue': 'uniform (0 0 0)'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform (0 0 0)'}
     
     f.writeFile()
     
@@ -415,9 +424,11 @@ def setPrgh(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField']['inlet'] = {'type': 'fixedFluxPressure', 'value': 'uniform 101325'}
+            f['boundaryField'][key] = {'type': 'zeroGradient', 'value': 'uniform 101325'}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'fixedValue', 'value': 'uniform 101325'}
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 101325'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'fixedFluxPressure', 'value': 'uniform 101325'}
     
     f.writeFile()
     
@@ -431,17 +442,19 @@ def setAlphat(path, region, patch_info):
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatWallFunction', 'Prt': '0.85', 'value': 'uniform 0'}
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatWallFunction', 'Prt': '16.4', 'value': 'uniform 0'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatWallFunction', 'Prt': '0.85', 'value': 'uniform 0'}
+                f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatWallFunction', 'Prt': '16.4', 'value': 'uniform 0'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField']['inlet'] = {'type': 'calculated', 'value': 'uniform 0'}
+            f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'calculated', 'value': 'uniform 0'}
+            f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'compressible::alphatWallFunction', 'Prt': '0.85', 'value': 'uniform 0'}
     
     f.writeFile()
     
@@ -463,9 +476,37 @@ def setEpsilon(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField']['inlet'] = {'type': 'fixedValue', 'value': 'uniform 0.14'}
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 0.14'}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'zeroGradient'}
+            f['boundaryField'][key] = {'type': 'zeroGradient'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+    
+    f.writeFile()
+    
+def setOmega(path, region, patch_info):
+    """Setup epsilon file for fluid"""
+   
+    os.chdir(path+'/0/'+region)
+    file = path+'/0/'+region+'/omega'
+    f = ParsedParameterFile(file)
+    
+    for key, value in patch_info.items():
+        if 'adiabatic' in key:
+            if '".*_adiabatic"' not in f['boundaryField']:
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'omegaWallFunction', 'value': 'uniform 10'}
+        if 'interface' in key:
+            if '".*_interface"' not in f['boundaryField']:
+                f['boundaryField']['".*_interface"'] = {'type': 'omegaWallFunction', 'value': 'uniform 10'}
+        if 'symmetry' in key:
+            if '".*_symmetry"' not in f['boundaryField']:
+                f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
+        if 'inlet' in key:
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 10'}
+        if 'outlet' in key:
+            f['boundaryField'][key] = {'type': 'zeroGradient'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'omegaWallFunction', 'value': 'uniform 10'}
     
     f.writeFile()
     
@@ -487,9 +528,11 @@ def setK(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField']['inlet'] = {'type': 'fixedValue', 'value': 'uniform 0.01'}
+            f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 0.01'}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'zeroGradient'}
+            f['boundaryField'][key] = {'type': 'zeroGradient'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
     
     f.writeFile()
     
@@ -511,16 +554,18 @@ def setNut(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField']['inlet'] = {'type': 'calculated', 'value': 'uniform 0'}
+            f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
         if 'outlet' in key:
-            f['boundaryField']['outlet'] = {'type': 'calculated', 'value': 'uniform 0'}
+            f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
+        if 'heat_in' in key:
+            f['boundaryField'][key] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
     
     f.writeFile()
                        
 def set0Fluid(path, fluidRegions):
     """Setup 0 fluid files from templates"""
         
-    filesFluid = ['alphat', 'epsilon', 'k', 'nut', 'p', 'p_rgh', 'T', 'U']
+    filesFluid = ['alphat', 'epsilon', 'omega', 'k', 'nut', 'p', 'p_rgh', 'T', 'U']
     os.chdir(path)
     for region in fluidRegions:
         for file in filesFluid:
@@ -534,6 +579,7 @@ def set0Fluid(path, fluidRegions):
        setPrgh(path, region, patchInfo)
        setAlphat(path, region, patchInfo)
        setEpsilon(path, region, patchInfo)
+       setOmega(path, region, patchInfo)
        setK(path, region, patchInfo)
        setNut(path, region, patchInfo)
             
