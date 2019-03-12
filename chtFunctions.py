@@ -4,6 +4,8 @@
 Created on Thu Feb 21 13:17:19 2019
 
 @author: sanijo
+
+Works with specific enviroment
 """
 
 from PyFoam.RunDictionary.ParsedParameterFile import ParsedParameterFile
@@ -312,7 +314,7 @@ def setTsolid(path, region, patch_info):
             if '".*_heat_in"' not in f['boundaryField']:
                 heat = str(input('\nq [heat flux] value for patch '+str(key)+': '))
                 f['boundaryField']['".*_heat_in"'] = {'type': 'externalWallHeatFluxTemperature', 'kappaMethod': 'solidThermo',
-                  'q': heat, 'value': 'uniform 293.15', 'kappaName': 'none'}
+                  'q uniform ': heat, 'value': 'uniform 293.15', 'kappaName': 'none'}
     
     f.writeFile()
    

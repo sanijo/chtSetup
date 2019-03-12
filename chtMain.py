@@ -33,7 +33,7 @@ def main():
      
     cht.createFolders(path,regions)
     
-#    cht.fluentMeshToFoam(path, regions)
+    cht.fluentMeshToFoam(path, regions)
     
     cht.createInterface(path, regions)
     
