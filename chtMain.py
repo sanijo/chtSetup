@@ -12,17 +12,21 @@ from tkinter import filedialog
 import os          
     
 def main():
-
-    cwd = os.getcwd()
     
-    #Prompt user for path
+    #Prompt user for script path
     root = tk.Tk()
     root.withdraw()
-    path = filedialog.askdirectory()
-    print(path)
+    script_path = filedialog.askdirectory()
+    os.chdir(script_path)
+#    cwd = os.getcwd()
+    
+    #Prompt user for case path
+#    root = tk.Tk()
+#    root.withdraw()
+#    path = filedialog.askdirectory()
     
     #Specify path directly
-#    path = '/home/sanijo/OpenFOAM/sanijo-4.1/run/CHT_chtMain_test'
+    path = '/home/sanijo/OpenFOAM/sanijo-4.1/run/Ferrari/bornaCht'
     
     solidRegions, fluidRegions = cht.getRegions(path)
     
@@ -31,16 +35,16 @@ def main():
     print("Solid region(s): " + str(solidRegions))
     print("Fluid region(s): " + str(fluidRegions))
      
-    cht.createFolders(path,regions)
+#    cht.createFolders(path,regions)
+#    
+#    cht.fluentMeshToFoam(path, regions)
     
-    cht.fluentMeshToFoam(path, regions)
-    
-    cht.createInterface(path, regions)
+    cht.createInterface(path, regions, 'domain')
     
     cht.set0Solid(path, solidRegions)
     cht.set0Fluid(path, fluidRegions)
 
-    os.chdir(cwd)
+    os.chdir(script_path)
     
 if __name__ == "__main__":
     main()

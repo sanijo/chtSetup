@@ -142,7 +142,7 @@ def getStartFace(key, f):
                 break
     return startFace
         
-def createInterface(path, regions):
+def createInterface(path, regions, keyword):
     """Function which determines name and type of boundary surface inside 
        polyMesh/boundary. If the name of the boundary surface contains "interface"
        expression, function changes it's type to mappedWall, and adds sampleMode, 
@@ -174,17 +174,39 @@ def createInterface(path, regions):
             for i in range(len(f)):
                 if isinstance(f[i], str):
                     if 'inlet' in f[i]:
-                        keys = ['type', 'inGroups']
-                        values = ['patch', '1(patch)']
-                        for key, value in (zip(keys, values)):
-                            f[i+1][key] = value
+                        if keyword in f[i]:
+                            split = f[i].split('-')
+                            key = str(split[0]) 
+                            nFaces = getNumberOfFaces(key, f)
+                            startFace = getStartFace(key, f)
+                            keys = ['nFaces', 'startFace']
+                            values = [nFaces, startFace]
+                            for key, value in (zip(keys, values)):
+                                f[i] = str(split[0])
+                                f[i+1][key] = value 
+                        if keyword not in f[i]:
+                            keys = ['type', 'inGroups']
+                            values = ['patch', '1(patch)']
+                            for key, value in (zip(keys, values)):
+                                f[i+1][key] = value
                     if 'outlet' in f[i]:
-                        keys = ['type', 'inGroups']
-                        values = ['patch', '1(patch)']
-                        for key, value in (zip(keys, values)):
-                            f[i+1][key] = value
+                        if keyword in f[i]:
+                            split = f[i].split('-')
+                            key = str(split[0]) 
+                            nFaces = getNumberOfFaces(key, f)
+                            startFace = getStartFace(key, f)
+                            keys = ['nFaces', 'startFace']
+                            values = [nFaces, startFace]
+                            for key, value in (zip(keys, values)):
+                                f[i] = str(split[0])
+                                f[i+1][key] = value 
+                        if keyword not in f[i]:
+                            keys = ['type', 'inGroups']
+                            values = ['patch', '1(patch)']
+                            for key, value in (zip(keys, values)):
+                                f[i+1][key] = value
                     if 'interface' in f[i]:
-                        if 'component' in f[i]:
+                        if keyword in f[i]:
                             split = f[i].split('_')
                             samplePatch = str(split[1])+'_'+str(split[0])+'_interface'
                             region = str(split[1])
@@ -205,7 +227,7 @@ def createInterface(path, regions):
                             for key, value in (zip(keys, values)):
                                 f[i+1][key] = value  
                     if 'symmetry' in f[i]:
-                        if 'component' in f[i]:
+                        if keyword in f[i]:
                             split = f[i].split('_')
                             key = str(split[0]) + '_symmetry'
                             nFaces = getNumberOfFaces(key, f)
@@ -221,7 +243,7 @@ def createInterface(path, regions):
                             for key, value in (zip(keys, values)):
                                 f[i+1][key] = value
                     if 'adiabatic' in f[i]:
-                        if 'component' in f[i]:
+                        if keyword in f[i]:
                             split = f[i].split('_')
                             key = str(split[0]) + '_adiabatic'
                             nFaces = getNumberOfFaces(key, f)
@@ -246,8 +268,8 @@ def createInterface(path, regions):
                 
 #            print(f)
             
-            print('\n' + region + ' boundary done!\n')
-            f.writeFile()    
+            f.writeFile()  
+            print(region + ' boundary done!\n')
     except:
         print('Missing some folders, or wrong list input!') 
         
@@ -388,7 +410,8 @@ def setUfluid(path, region, patch_info):
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedValue', 'value': 'uniform (0 0 0)'}
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'noSlip'}
+#                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedValue', 'value': 'uniform (0 0 0)'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
                 f['boundaryField']['".*_interface"'] = {'type': 'fixedValue', 'value': 'uniform (0 0 0)'}
@@ -396,11 +419,17 @@ def setUfluid(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            x = str(input('\nVelocity x component [m/s] value for patch '+str(key)+': '))
-            y = str(input('\nVelocity y component [m/s] value for patch '+str(key)+': '))
-            z = str(input('\nVelocity z component [m/s] value for patch '+str(key)+': '))
-            vector = 'uniform ('+str(x)+' '+str(y)+' '+str(z)+')'
-            f['boundaryField'][key] = {'type': 'fixedValue', 'value': vector}
+            switch = str(input('\nflowRateInletVelocity (write fr) or fixedValue (wite fv)?'))
+            if switch == 'fv':
+                x = str(input('\nVelocity x component [m/s] value for patch '+str(key)+': '))
+                y = str(input('\nVelocity y component [m/s] value for patch '+str(key)+': '))
+                z = str(input('\nVelocity z component [m/s] value for patch '+str(key)+': '))
+                vector = 'uniform ('+str(x)+' '+str(y)+' '+str(z)+')'
+                f['boundaryField'][key] = {'type': 'fixedValue', 'value': vector}
+            if switch == 'fr':
+                x = str(input('\nVolume flow rate [m3/s] on patch '+str(key)+': '))
+                f['boundaryField'][key] = {'type': 'flowRateInletVelocity', 'volumetricFlowRate':'constant '+x,
+                 'extrapolateProfile': 'false', 'value': 'uniform (0 0 0)'}                
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'inletOutlet', 'value': 'uniform (0 0 0)', 'inletValue': 'uniform (0 0 0)'}
         if 'heat_in' in key:
@@ -418,10 +447,10 @@ def setPrgh(path, region, patch_info):
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedFluxPressure', 'value': 'uniform 101325'}
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedFluxPressure'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'fixedFluxPressure', 'value': 'uniform 101325'}
+                f['boundaryField']['".*_interface"'] = {'type': 'fixedFluxPressure'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -430,7 +459,7 @@ def setPrgh(path, region, patch_info):
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 101325'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'fixedFluxPressure', 'value': 'uniform 101325'}
+            f['boundaryField'][key] = {'type': 'fixedFluxPressure'}
     
     f.writeFile()
     
@@ -444,10 +473,10 @@ def setAlphat(path, region, patch_info):
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatWallFunction', 'Prt': '16.4', 'value': 'uniform 0'}
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatWallFunction', 'Prt': '16.4', 'value': 'uniform 0'}
+                f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -456,7 +485,7 @@ def setAlphat(path, region, patch_info):
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'compressible::alphatWallFunction', 'Prt': '0.85', 'value': 'uniform 0'}
+            f['boundaryField'][key] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
     
     f.writeFile()
     
