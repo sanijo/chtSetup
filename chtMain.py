@@ -35,14 +35,16 @@ def main():
     print("Solid region(s): " + str(solidRegions))
     print("Fluid region(s): " + str(fluidRegions))
      
-#    cht.createFolders(path,regions)
-#    
+    cht.createFolders(path,regions)
+    
 #    cht.fluentMeshToFoam(path, regions)
     
-    cht.createInterface(path, regions, 'domain')
+#    cht.createInterface(path, regions, 'design')
     
     cht.set0Solid(path, solidRegions)
     cht.set0Fluid(path, fluidRegions)
+    
+    print('\nDone!')
 
     os.chdir(script_path)
     

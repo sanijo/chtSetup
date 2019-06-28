@@ -306,6 +306,8 @@ def setPsolid(path, region, patch_info):
     file = path+'/0/'+region+'/p'
     f = ParsedParameterFile(file)
     
+    print('\nSetting p (solid) file..')
+    
     f['boundaryField']['".*"'] = {'type': 'calculated','value': 'uniform 0'}
     
     for key, value in patch_info.items():
@@ -321,14 +323,22 @@ def setTsolid(path, region, patch_info):
     file = path+'/0/'+region+'/T'
     f = ParsedParameterFile(file)
     
+    print('\nSetting T (solid) file..')
+    
+    switch = str(input('\nRegion '+region+' have isotropic (1) or anisotropic (2) properties? '))
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
                 f['boundaryField']['".*_adiabatic"'] = {'type': 'zeroGradient'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'compressible::turbulentTemperatureCoupledBaffleMixed',
-                 'value': 'uniform 293.15', 'kappaMethod': 'solidThermo', 'kappaName': 'none', 'Tnbr': 'T'}
+                if switch == '1':
+                    f['boundaryField']['".*_interface"'] = {'type': 'compressible::turbulentTemperatureCoupledBaffleMixed',
+                     'value': 'uniform 293.15', 'kappaMethod': 'solidThermo', 'kappaName': 'none', 'Tnbr': 'T'}
+                if switch == '2':
+                    f['boundaryField']['".*_interface"'] = {'type': 'compressible::turbulentTemperatureCoupledBaffleMixed',
+                     'value': 'uniform 293.15', 'kappaMethod': 'directionalSolidThermo', 'kappaName': 'none', 'Tnbr': 'T'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -363,6 +373,8 @@ def setPfluid(path, region, patch_info):
     file = path+'/0/'+region+'/p'
     f = ParsedParameterFile(file)
     
+    print('\nSetting p (fluid) file..')
+    
     f['boundaryField']['".*"'] = {'type': 'calculated','value': 'uniform 0'}
     
     for key, value in patch_info.items():
@@ -377,6 +389,8 @@ def setTfluid(path, region, patch_info):
     os.chdir(path+'/0/'+region)
     file = path+'/0/'+region+'/T'
     f = ParsedParameterFile(file)
+    
+    print('\nSetting T (fluid) file..')
     
     for key, value in patch_info.items():
         if 'adiabatic' in key:
@@ -407,6 +421,10 @@ def setUfluid(path, region, patch_info):
     file = path+'/0/'+region+'/U'
     f = ParsedParameterFile(file)
     
+    print('\nSetting U (fluid) file..')
+    
+    switch = str(input('\nflowRateInletVelocity (write fr) or fixedValue (wite fv)?'))
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
@@ -419,7 +437,6 @@ def setUfluid(path, region, patch_info):
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            switch = str(input('\nflowRateInletVelocity (write fr) or fixedValue (wite fv)?'))
             if switch == 'fv':
                 x = str(input('\nVelocity x component [m/s] value for patch '+str(key)+': '))
                 y = str(input('\nVelocity y component [m/s] value for patch '+str(key)+': '))
@@ -438,28 +455,30 @@ def setUfluid(path, region, patch_info):
     f.writeFile()
     
 def setPrgh(path, region, patch_info):
-    """Setup p_rgh file for fluid"""
+    """Setup p_rgh (fluid) file for fluid"""
    
     os.chdir(path+'/0/'+region)
     file = path+'/0/'+region+'/p_rgh'
     f = ParsedParameterFile(file)
     
+    print('\nSetting p_rgh file..')
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedFluxPressure'}
+                f['boundaryField']['".*_adiabatic"'] = {'type': 'fixedFluxPressure'} #type': 'zeroGradient', 'value': 'uniform 101325'
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'fixedFluxPressure'}
+                f['boundaryField']['".*_interface"'] = {'type': 'fixedFluxPressure'} #type': 'zeroGradient', 'value': 'uniform 101325'
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
         if 'inlet' in key:
-            f['boundaryField'][key] = {'type': 'zeroGradient', 'value': 'uniform 101325'}
+            f['boundaryField'][key] = {'type': 'fixedFluxPressure'} #type': 'zeroGradient', 'value': 'uniform 101325'
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'fixedValue', 'value': 'uniform 101325'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'fixedFluxPressure'}
+            f['boundaryField'][key] = {'type': 'fixedFluxPressure'} #type': 'zeroGradient', 'value': 'uniform 101325'
     
     f.writeFile()
     
@@ -470,13 +489,23 @@ def setAlphat(path, region, patch_info):
     file = path+'/0/'+region+'/alphat'
     f = ParsedParameterFile(file)
     
+    print('\nSetting alphat file..')
+    
+    switch = str(input('\nalphatJayatilleke (1) or alphat (2)? '))
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
+                if switch == '1':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatJayatillekeWallFunction', 'value': 'uniform 0'}
+                if switch == '2':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
+                if switch == '1':
+                    f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatJayatillekeWallFunction', 'value': 'uniform 0'}
+                if switch == '2':
+                    f['boundaryField']['".*_interface"'] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -485,7 +514,10 @@ def setAlphat(path, region, patch_info):
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
+            if switch == '1':
+                f['boundaryField'][key] = {'type': 'compressible::alphatJayatillekeWallFunction', 'value': 'uniform 0'}
+            if switch == '2':
+                f['boundaryField'][key] = {'type': 'compressible::alphatWallFunction', 'value': 'uniform 0'}
     
     f.writeFile()
     
@@ -496,13 +528,23 @@ def setEpsilon(path, region, patch_info):
     file = path+'/0/'+region+'/epsilon'
     f = ParsedParameterFile(file)
     
+    print('\nSetting epsilon file..')
+    
+    switch = str(input('\nhighReNumber model (1) or lowReNumber model (2)? '))
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+                if switch == '1':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+                if switch == '2':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'epsilonLowReWallFunction', 'value': 'uniform 0.14'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+                if switch == '1':
+                    f['boundaryField']['".*_interface"'] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+                if switch == '2':
+                    f['boundaryField']['".*_interface"'] = {'type': 'epsilonLowReWallFunction', 'value': 'uniform 0.14'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -511,7 +553,10 @@ def setEpsilon(path, region, patch_info):
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'zeroGradient'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+            if switch == '1':
+                f['boundaryField'][key] = {'type': 'epsilonWallFunction', 'value': 'uniform 0.14'}
+            if switch == '2':
+                f['boundaryField'][key] = {'type': 'epsilonLowReWallFunction', 'value': 'uniform 0.14'}
     
     f.writeFile()
     
@@ -521,6 +566,8 @@ def setOmega(path, region, patch_info):
     os.chdir(path+'/0/'+region)
     file = path+'/0/'+region+'/omega'
     f = ParsedParameterFile(file)
+    
+    print('\nSetting omega file..')
     
     for key, value in patch_info.items():
         if 'adiabatic' in key:
@@ -548,13 +595,23 @@ def setK(path, region, patch_info):
     file = path+'/0/'+region+'/k'
     f = ParsedParameterFile(file)
     
+    print('\nSetting k file..')
+    
+    switch = str(input('\nhighReNumber model (1) or lowReNumber model (2)? '))
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
+                if switch == '1':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
+                if switch == '2':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'kLowReWallFunction', 'value': 'uniform 0.01'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
+                if switch == '1':
+                    f['boundaryField']['".*_interface"'] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
+                if switch == '2':
+                    f['boundaryField']['".*_interface"'] = {'type': 'kLowReWallFunction', 'value': 'uniform 0.01'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -563,7 +620,10 @@ def setK(path, region, patch_info):
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'zeroGradient'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
+                if switch == '1':
+                    f['boundaryField'][key] = {'type': 'kqRWallFunction', 'value': 'uniform 0.01'}
+                if switch == '2':
+                    f['boundaryField'][key] = {'type': 'kLowReWallFunction', 'value': 'uniform 0.01'}
     
     f.writeFile()
     
@@ -574,13 +634,23 @@ def setNut(path, region, patch_info):
     file = path+'/0/'+region+'/nut'
     f = ParsedParameterFile(file)
     
+    print('\nSetting nut file..')
+    
+    switch = str(input('\nhighReNumber model (1) or lowReNumber model (2)? '))
+    
     for key, value in patch_info.items():
         if 'adiabatic' in key:
             if '".*_adiabatic"' not in f['boundaryField']:
-                f['boundaryField']['".*_adiabatic"'] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
+                if switch == '1':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
+                if switch == '2':
+                    f['boundaryField']['".*_adiabatic"'] = {'type': 'nutLowReWallFunction', 'value': 'uniform 0'}
         if 'interface' in key:
             if '".*_interface"' not in f['boundaryField']:
-                f['boundaryField']['".*_interface"'] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
+                if switch == '1':
+                    f['boundaryField']['".*_interface"'] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
+                if switch == '2':
+                    f['boundaryField']['".*_interface"'] = {'type': 'nutLowReWallFunction', 'value': 'uniform 0'}
         if 'symmetry' in key:
             if '".*_symmetry"' not in f['boundaryField']:
                 f['boundaryField']['".*_symmetry"'] = {'type': 'symmetry'}
@@ -589,7 +659,10 @@ def setNut(path, region, patch_info):
         if 'outlet' in key:
             f['boundaryField'][key] = {'type': 'calculated', 'value': 'uniform 0'}
         if 'heat_in' in key:
-            f['boundaryField'][key] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
+                if switch == '1':
+                    f['boundaryField'][key] = {'type': 'nutkWallFunction', 'value': 'uniform 0'}
+                if switch == '2':
+                    f['boundaryField'][key] = {'type': 'nutLowReWallFunction', 'value': 'uniform 0'}
     
     f.writeFile()
                        
