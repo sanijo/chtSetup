@@ -37,9 +37,9 @@ def main():
      
     cht.createFolders(path,regions)
     
-#    cht.fluentMeshToFoam(path, regions)
+#    cht.fluentMeshToFoam(path, regions, check_mesh=True)
     
-#    cht.createInterface(path, regions, 'design')
+    cht.createInterface(path, regions, 'design')
     
     cht.set0Solid(path, solidRegions)
     cht.set0Fluid(path, fluidRegions)
